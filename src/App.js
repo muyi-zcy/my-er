@@ -1,23 +1,24 @@
-import logo from './logo.svg';
+import { useRef } from 'react';
 import './App.css';
+import ERCanvas from './components/Canvas/ERCanvas';
+import Logo from './components/Logo/Logo';
+import Toolbar from './components/Toolbar/Toolbar';
 
 function App() {
+  const canvasRef = useRef(/** @type {import('./components/Canvas/ERCanvas').ERCanvasHandleExport | null} */ (null));
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+    <div className="app">
+      <header className="app-toolbar">
+        <div className="app-brand">
+          <Logo className="app-logo" />
+          <h1 className="app-title">MY-ER</h1>
+        </div>
+        <Toolbar canvasRef={canvasRef} />
       </header>
+      <main className="app-main">
+        <ERCanvas ref={canvasRef} />
+      </main>
     </div>
   );
 }

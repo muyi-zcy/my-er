@@ -1,0 +1,123 @@
+{
+  "schemaVersion": "1.0.0",
+  "metadata": {
+    "name": "shop-er",
+    "dialect": "mysql"
+  },
+  "tables": [
+    {
+      "id": "users",
+      "name": "users",
+      "comment": "User accounts",
+      "position": { "x": 40, "y": 40 },
+      "columns": [
+        {
+          "id": "id",
+          "name": "id",
+          "dataType": "bigint",
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false
+        },
+        {
+          "id": "email",
+          "name": "email",
+          "dataType": "varchar(255)",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": true
+        },
+        {
+          "id": "created_at",
+          "name": "created_at",
+          "dataType": "datetime",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false
+        }
+      ]
+    },
+    {
+      "id": "orders",
+      "name": "orders",
+      "comment": "Customer orders",
+      "position": { "x": 400, "y": 40 },
+      "columns": [
+        {
+          "id": "id",
+          "name": "id",
+          "dataType": "bigint",
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false
+        },
+        {
+          "id": "user_id",
+          "name": "user_id",
+          "dataType": "bigint",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "id": "total",
+          "name": "total",
+          "dataType": "decimal(10,2)",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "id": "status",
+          "name": "status",
+          "dataType": "varchar(32)",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false
+        }
+      ]
+    },
+    {
+      "id": "products",
+      "name": "products",
+      "comment": "",
+      "position": { "x": 40, "y": 280 },
+      "columns": [
+        {
+          "id": "id",
+          "name": "id",
+          "dataType": "bigint",
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false
+        },
+        {
+          "id": "name",
+          "name": "name",
+          "dataType": "varchar(128)",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "id": "price",
+          "name": "price",
+          "dataType": "decimal(10,2)",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "orders-user_id-users-id",
+      "kind": "field-field",
+      "source": { "tableId": "orders", "columnId": "user_id" },
+      "target": { "tableId": "users", "columnId": "id" },
+      "cardinality": "1:N",
+      "comment": "orders.user_id → users.id"
+    }
+  ]
+}

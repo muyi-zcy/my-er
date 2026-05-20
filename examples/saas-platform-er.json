@@ -1,0 +1,621 @@
+{
+  "schemaVersion": "1.0.0",
+  "metadata": {
+    "name": "saas-platform-er",
+    "dialect": "mysql"
+  },
+  "tables": [
+    {
+      "id": "permissions",
+      "name": "permissions",
+      "comment": "全局权限定义（跨租户）",
+      "position": { "x": 40, "y": 40 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "code", "name": "code", "dataType": "varchar(64)", "nullable": false, "primaryKey": false, "unique": true },
+        { "id": "resource", "name": "resource", "dataType": "varchar(64)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "action", "name": "action", "dataType": "varchar(32)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "description", "name": "description", "dataType": "varchar(255)", "nullable": true, "primaryKey": false, "unique": false }
+      ]
+    },
+    {
+      "id": "plans",
+      "name": "plans",
+      "comment": "订阅套餐",
+      "position": { "x": 400, "y": 40 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "name", "name": "name", "dataType": "varchar(64)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "code", "name": "code", "dataType": "varchar(32)", "nullable": false, "primaryKey": false, "unique": true },
+        { "id": "price_monthly", "name": "price_monthly", "dataType": "decimal(10,2)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "max_users", "name": "max_users", "dataType": "int", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "max_projects", "name": "max_projects", "dataType": "int", "nullable": false, "primaryKey": false, "unique": false }
+      ]
+    },
+    {
+      "id": "tenants",
+      "name": "tenants",
+      "comment": "租户（组织）",
+      "position": { "x": 40, "y": 240 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "name", "name": "name", "dataType": "varchar(128)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "slug", "name": "slug", "dataType": "varchar(64)", "nullable": false, "primaryKey": false, "unique": true },
+        { "id": "status", "name": "status", "dataType": "varchar(16)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "created_at", "name": "created_at", "dataType": "datetime", "nullable": false, "primaryKey": false, "unique": false }
+      ]
+    },
+    {
+      "id": "subscriptions",
+      "name": "subscriptions",
+      "comment": "租户订阅记录",
+      "position": { "x": 400, "y": 240 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "tenant_id", "name": "tenant_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "plan_id", "name": "plan_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "status", "name": "status", "dataType": "varchar(16)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "current_period_start", "name": "current_period_start", "dataType": "datetime", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "current_period_end", "name": "current_period_end", "dataType": "datetime", "nullable": false, "primaryKey": false, "unique": false }
+      ]
+    },
+    {
+      "id": "invoices",
+      "name": "invoices",
+      "comment": "账单",
+      "position": { "x": 760, "y": 240 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "tenant_id", "name": "tenant_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "subscription_id", "name": "subscription_id", "dataType": "bigint", "nullable": true, "primaryKey": false, "unique": false },
+        { "id": "invoice_no", "name": "invoice_no", "dataType": "varchar(32)", "nullable": false, "primaryKey": false, "unique": true },
+        { "id": "amount", "name": "amount", "dataType": "decimal(12,2)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "status", "name": "status", "dataType": "varchar(16)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "issued_at", "name": "issued_at", "dataType": "datetime", "nullable": false, "primaryKey": false, "unique": false }
+      ]
+    },
+    {
+      "id": "invoice_lines",
+      "name": "invoice_lines",
+      "comment": "账单明细行",
+      "position": { "x": 1120, "y": 240 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "invoice_id", "name": "invoice_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "description", "name": "description", "dataType": "varchar(255)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "quantity", "name": "quantity", "dataType": "int", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "unit_price", "name": "unit_price", "dataType": "decimal(10,2)", "nullable": false, "primaryKey": false, "unique": false }
+      ]
+    },
+    {
+      "id": "payments",
+      "name": "payments",
+      "comment": "支付流水",
+      "position": { "x": 1480, "y": 240 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "invoice_id", "name": "invoice_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "provider", "name": "provider", "dataType": "varchar(32)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "transaction_id", "name": "transaction_id", "dataType": "varchar(128)", "nullable": false, "primaryKey": false, "unique": true },
+        { "id": "amount", "name": "amount", "dataType": "decimal(12,2)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "paid_at", "name": "paid_at", "dataType": "datetime", "nullable": false, "primaryKey": false, "unique": false }
+      ]
+    },
+    {
+      "id": "users",
+      "name": "users",
+      "comment": "租户内用户",
+      "position": { "x": 40, "y": 480 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "tenant_id", "name": "tenant_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "email", "name": "email", "dataType": "varchar(255)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "password_hash", "name": "password_hash", "dataType": "varchar(255)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "display_name", "name": "display_name", "dataType": "varchar(64)", "nullable": true, "primaryKey": false, "unique": false },
+        { "id": "status", "name": "status", "dataType": "varchar(16)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "last_login_at", "name": "last_login_at", "dataType": "datetime", "nullable": true, "primaryKey": false, "unique": false }
+      ]
+    },
+    {
+      "id": "roles",
+      "name": "roles",
+      "comment": "租户角色",
+      "position": { "x": 400, "y": 480 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "tenant_id", "name": "tenant_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "name", "name": "name", "dataType": "varchar(64)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "code", "name": "code", "dataType": "varchar(32)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "description", "name": "description", "dataType": "varchar(255)", "nullable": true, "primaryKey": false, "unique": false }
+      ]
+    },
+    {
+      "id": "user_roles",
+      "name": "user_roles",
+      "comment": "用户-角色关联",
+      "position": { "x": 760, "y": 480 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "user_id", "name": "user_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "role_id", "name": "role_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false }
+      ]
+    },
+    {
+      "id": "role_permissions",
+      "name": "role_permissions",
+      "comment": "角色-权限关联",
+      "position": { "x": 1120, "y": 480 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "role_id", "name": "role_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "permission_id", "name": "permission_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false }
+      ]
+    },
+    {
+      "id": "projects",
+      "name": "projects",
+      "comment": "项目空间",
+      "position": { "x": 40, "y": 720 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "tenant_id", "name": "tenant_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "name", "name": "name", "dataType": "varchar(128)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "project_key", "name": "project_key", "dataType": "varchar(16)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "owner_id", "name": "owner_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "status", "name": "status", "dataType": "varchar(16)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "archived_at", "name": "archived_at", "dataType": "datetime", "nullable": true, "primaryKey": false, "unique": false }
+      ]
+    },
+    {
+      "id": "project_members",
+      "name": "project_members",
+      "comment": "项目成员",
+      "position": { "x": 400, "y": 720 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "project_id", "name": "project_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "user_id", "name": "user_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "member_role", "name": "member_role", "dataType": "varchar(32)", "nullable": false, "primaryKey": false, "unique": false }
+      ]
+    },
+    {
+      "id": "tasks",
+      "name": "tasks",
+      "comment": "任务（支持子任务）",
+      "position": { "x": 760, "y": 720 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "project_id", "name": "project_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "parent_task_id", "name": "parent_task_id", "dataType": "bigint", "nullable": true, "primaryKey": false, "unique": false },
+        { "id": "title", "name": "title", "dataType": "varchar(255)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "status", "name": "status", "dataType": "varchar(16)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "assignee_id", "name": "assignee_id", "dataType": "bigint", "nullable": true, "primaryKey": false, "unique": false },
+        { "id": "reporter_id", "name": "reporter_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "priority", "name": "priority", "dataType": "tinyint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "due_at", "name": "due_at", "dataType": "datetime", "nullable": true, "primaryKey": false, "unique": false }
+      ]
+    },
+    {
+      "id": "task_comments",
+      "name": "task_comments",
+      "comment": "任务评论",
+      "position": { "x": 1120, "y": 720 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "task_id", "name": "task_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "author_id", "name": "author_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "body", "name": "body", "dataType": "text", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "created_at", "name": "created_at", "dataType": "datetime", "nullable": false, "primaryKey": false, "unique": false }
+      ]
+    },
+    {
+      "id": "tags",
+      "name": "tags",
+      "comment": "标签",
+      "position": { "x": 40, "y": 960 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "tenant_id", "name": "tenant_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "name", "name": "name", "dataType": "varchar(64)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "color", "name": "color", "dataType": "char(7)", "nullable": true, "primaryKey": false, "unique": false }
+      ]
+    },
+    {
+      "id": "task_tags",
+      "name": "task_tags",
+      "comment": "任务-标签多对多",
+      "position": { "x": 400, "y": 960 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "task_id", "name": "task_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "tag_id", "name": "tag_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false }
+      ]
+    },
+    {
+      "id": "attachments",
+      "name": "attachments",
+      "comment": "附件",
+      "position": { "x": 760, "y": 960 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "tenant_id", "name": "tenant_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "uploader_id", "name": "uploader_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "file_name", "name": "file_name", "dataType": "varchar(255)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "storage_key", "name": "storage_key", "dataType": "varchar(512)", "nullable": false, "primaryKey": false, "unique": true },
+        { "id": "size_bytes", "name": "size_bytes", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false }
+      ]
+    },
+    {
+      "id": "audit_logs",
+      "name": "audit_logs",
+      "comment": "审计日志",
+      "position": { "x": 40, "y": 1200 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "tenant_id", "name": "tenant_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "actor_id", "name": "actor_id", "dataType": "bigint", "nullable": true, "primaryKey": false, "unique": false },
+        { "id": "action", "name": "action", "dataType": "varchar(64)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "entity_type", "name": "entity_type", "dataType": "varchar(64)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "entity_id", "name": "entity_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "ip_address", "name": "ip_address", "dataType": "varchar(45)", "nullable": true, "primaryKey": false, "unique": false },
+        { "id": "created_at", "name": "created_at", "dataType": "datetime", "nullable": false, "primaryKey": false, "unique": false }
+      ]
+    },
+    {
+      "id": "notifications",
+      "name": "notifications",
+      "comment": "站内通知",
+      "position": { "x": 400, "y": 1200 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "user_id", "name": "user_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "type", "name": "type", "dataType": "varchar(32)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "title", "name": "title", "dataType": "varchar(128)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "read_at", "name": "read_at", "dataType": "datetime", "nullable": true, "primaryKey": false, "unique": false },
+        { "id": "created_at", "name": "created_at", "dataType": "datetime", "nullable": false, "primaryKey": false, "unique": false }
+      ]
+    },
+    {
+      "id": "webhooks",
+      "name": "webhooks",
+      "comment": "Webhook 端点",
+      "position": { "x": 760, "y": 1200 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "tenant_id", "name": "tenant_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "url", "name": "url", "dataType": "varchar(512)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "secret", "name": "secret", "dataType": "varchar(128)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "events", "name": "events", "dataType": "json", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "enabled", "name": "enabled", "dataType": "boolean", "nullable": false, "primaryKey": false, "unique": false }
+      ]
+    },
+    {
+      "id": "api_keys",
+      "name": "api_keys",
+      "comment": "API 密钥",
+      "position": { "x": 1120, "y": 1200 },
+      "columns": [
+        { "id": "id", "name": "id", "dataType": "bigint", "nullable": false, "primaryKey": true, "unique": false },
+        { "id": "tenant_id", "name": "tenant_id", "dataType": "bigint", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "user_id", "name": "user_id", "dataType": "bigint", "nullable": true, "primaryKey": false, "unique": false },
+        { "id": "name", "name": "name", "dataType": "varchar(64)", "nullable": false, "primaryKey": false, "unique": false },
+        { "id": "key_hash", "name": "key_hash", "dataType": "varchar(128)", "nullable": false, "primaryKey": false, "unique": true },
+        { "id": "last_used_at", "name": "last_used_at", "dataType": "datetime", "nullable": true, "primaryKey": false, "unique": false }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "subscriptions-tenant_id-tenants-id",
+      "kind": "field-field",
+      "source": { "tableId": "subscriptions", "columnId": "tenant_id" },
+      "target": { "tableId": "tenants", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "subscriptions.tenant_id → tenants.id"
+    },
+    {
+      "id": "subscriptions-plan_id-plans-id",
+      "kind": "field-field",
+      "source": { "tableId": "subscriptions", "columnId": "plan_id" },
+      "target": { "tableId": "plans", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "subscriptions.plan_id → plans.id"
+    },
+    {
+      "id": "invoices-tenant_id-tenants-id",
+      "kind": "field-field",
+      "source": { "tableId": "invoices", "columnId": "tenant_id" },
+      "target": { "tableId": "tenants", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "invoices.tenant_id → tenants.id"
+    },
+    {
+      "id": "invoices-subscription_id-subscriptions-id",
+      "kind": "field-field",
+      "source": { "tableId": "invoices", "columnId": "subscription_id" },
+      "target": { "tableId": "subscriptions", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "invoices.subscription_id → subscriptions.id"
+    },
+    {
+      "id": "invoice_lines-invoice_id-invoices-id",
+      "kind": "field-field",
+      "source": { "tableId": "invoice_lines", "columnId": "invoice_id" },
+      "target": { "tableId": "invoices", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "invoice_lines.invoice_id → invoices.id"
+    },
+    {
+      "id": "payments-invoice_id-invoices-id",
+      "kind": "field-field",
+      "source": { "tableId": "payments", "columnId": "invoice_id" },
+      "target": { "tableId": "invoices", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "payments.invoice_id → invoices.id"
+    },
+    {
+      "id": "users-tenant_id-tenants-id",
+      "kind": "field-field",
+      "source": { "tableId": "users", "columnId": "tenant_id" },
+      "target": { "tableId": "tenants", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "users.tenant_id → tenants.id"
+    },
+    {
+      "id": "roles-tenant_id-tenants-id",
+      "kind": "field-field",
+      "source": { "tableId": "roles", "columnId": "tenant_id" },
+      "target": { "tableId": "tenants", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "roles.tenant_id → tenants.id"
+    },
+    {
+      "id": "user_roles-user_id-users-id",
+      "kind": "field-field",
+      "source": { "tableId": "user_roles", "columnId": "user_id" },
+      "target": { "tableId": "users", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "user_roles.user_id → users.id"
+    },
+    {
+      "id": "user_roles-role_id-roles-id",
+      "kind": "field-field",
+      "source": { "tableId": "user_roles", "columnId": "role_id" },
+      "target": { "tableId": "roles", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "user_roles.role_id → roles.id"
+    },
+    {
+      "id": "role_permissions-role_id-roles-id",
+      "kind": "field-field",
+      "source": { "tableId": "role_permissions", "columnId": "role_id" },
+      "target": { "tableId": "roles", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "role_permissions.role_id → roles.id"
+    },
+    {
+      "id": "role_permissions-permission_id-permissions-id",
+      "kind": "field-field",
+      "source": { "tableId": "role_permissions", "columnId": "permission_id" },
+      "target": { "tableId": "permissions", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "role_permissions.permission_id → permissions.id"
+    },
+    {
+      "id": "projects-tenant_id-tenants-id",
+      "kind": "field-field",
+      "source": { "tableId": "projects", "columnId": "tenant_id" },
+      "target": { "tableId": "tenants", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "projects.tenant_id → tenants.id"
+    },
+    {
+      "id": "projects-owner_id-users",
+      "kind": "field-table",
+      "source": { "tableId": "projects", "columnId": "owner_id" },
+      "target": { "tableId": "users" },
+      "cardinality": "N:1",
+      "comment": "projects.owner_id → users（负责人）"
+    },
+    {
+      "id": "project_members-project_id-projects-id",
+      "kind": "field-field",
+      "source": { "tableId": "project_members", "columnId": "project_id" },
+      "target": { "tableId": "projects", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "project_members.project_id → projects.id"
+    },
+    {
+      "id": "project_members-user_id-users-id",
+      "kind": "field-field",
+      "source": { "tableId": "project_members", "columnId": "user_id" },
+      "target": { "tableId": "users", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "project_members.user_id → users.id"
+    },
+    {
+      "id": "tasks-project_id-projects-id",
+      "kind": "field-field",
+      "source": { "tableId": "tasks", "columnId": "project_id" },
+      "target": { "tableId": "projects", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "tasks.project_id → projects.id"
+    },
+    {
+      "id": "tasks-parent_task_id-tasks-id",
+      "kind": "field-field",
+      "source": { "tableId": "tasks", "columnId": "parent_task_id" },
+      "target": { "tableId": "tasks", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "tasks.parent_task_id → tasks.id（子任务）"
+    },
+    {
+      "id": "tasks-assignee_id-users",
+      "kind": "field-table",
+      "source": { "tableId": "tasks", "columnId": "assignee_id" },
+      "target": { "tableId": "users" },
+      "cardinality": "N:1",
+      "comment": "tasks.assignee_id → users（经办人）"
+    },
+    {
+      "id": "tasks-reporter_id-users-id",
+      "kind": "field-field",
+      "source": { "tableId": "tasks", "columnId": "reporter_id" },
+      "target": { "tableId": "users", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "tasks.reporter_id → users.id"
+    },
+    {
+      "id": "task_comments-task_id-tasks-id",
+      "kind": "field-field",
+      "source": { "tableId": "task_comments", "columnId": "task_id" },
+      "target": { "tableId": "tasks", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "task_comments.task_id → tasks.id"
+    },
+    {
+      "id": "task_comments-author_id-users-id",
+      "kind": "field-field",
+      "source": { "tableId": "task_comments", "columnId": "author_id" },
+      "target": { "tableId": "users", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "task_comments.author_id → users.id"
+    },
+    {
+      "id": "tags-tenant_id-tenants-id",
+      "kind": "field-field",
+      "source": { "tableId": "tags", "columnId": "tenant_id" },
+      "target": { "tableId": "tenants", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "tags.tenant_id → tenants.id"
+    },
+    {
+      "id": "task_tags-task_id-tasks-id",
+      "kind": "field-field",
+      "source": { "tableId": "task_tags", "columnId": "task_id" },
+      "target": { "tableId": "tasks", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "task_tags.task_id → tasks.id"
+    },
+    {
+      "id": "task_tags-tag_id-tags-id",
+      "kind": "field-field",
+      "source": { "tableId": "task_tags", "columnId": "tag_id" },
+      "target": { "tableId": "tags", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "task_tags.tag_id → tags.id"
+    },
+    {
+      "id": "task_tags-tasks-tags-nm",
+      "kind": "field-field",
+      "source": { "tableId": "task_tags", "columnId": "task_id" },
+      "target": { "tableId": "tags", "columnId": "id" },
+      "cardinality": "N:M",
+      "comment": "tasks ↔ tags 多对多（经 task_tags）"
+    },
+    {
+      "id": "attachments-tenant_id-tenants-id",
+      "kind": "field-field",
+      "source": { "tableId": "attachments", "columnId": "tenant_id" },
+      "target": { "tableId": "tenants", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "attachments.tenant_id → tenants.id"
+    },
+    {
+      "id": "attachments-uploader_id-users",
+      "kind": "field-table",
+      "source": { "tableId": "attachments", "columnId": "uploader_id" },
+      "target": { "tableId": "users" },
+      "cardinality": "N:1",
+      "comment": "attachments.uploader_id → users"
+    },
+    {
+      "id": "audit_logs-tenant_id-tenants-id",
+      "kind": "field-field",
+      "source": { "tableId": "audit_logs", "columnId": "tenant_id" },
+      "target": { "tableId": "tenants", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "audit_logs.tenant_id → tenants.id"
+    },
+    {
+      "id": "audit_logs-actor_id-users",
+      "kind": "field-table",
+      "source": { "tableId": "audit_logs", "columnId": "actor_id" },
+      "target": { "tableId": "users" },
+      "cardinality": "N:1",
+      "comment": "audit_logs.actor_id → users（操作者）"
+    },
+    {
+      "id": "notifications-user_id-users-id",
+      "kind": "field-field",
+      "source": { "tableId": "notifications", "columnId": "user_id" },
+      "target": { "tableId": "users", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "notifications.user_id → users.id"
+    },
+    {
+      "id": "webhooks-tenant_id-tenants-id",
+      "kind": "field-field",
+      "source": { "tableId": "webhooks", "columnId": "tenant_id" },
+      "target": { "tableId": "tenants", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "webhooks.tenant_id → tenants.id"
+    },
+    {
+      "id": "api_keys-tenant_id-tenants-id",
+      "kind": "field-field",
+      "source": { "tableId": "api_keys", "columnId": "tenant_id" },
+      "target": { "tableId": "tenants", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "api_keys.tenant_id → tenants.id"
+    },
+    {
+      "id": "api_keys-user_id-users-id",
+      "kind": "field-field",
+      "source": { "tableId": "api_keys", "columnId": "user_id" },
+      "target": { "tableId": "users", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "api_keys.user_id → users.id"
+    },
+    {
+      "id": "tenants-subscriptions-table",
+      "kind": "table-table",
+      "source": { "tableId": "tenants" },
+      "target": { "tableId": "subscriptions" },
+      "cardinality": "1:N",
+      "comment": "租户 ↔ 订阅（表级概念关联）"
+    },
+    {
+      "id": "tenants-projects-table",
+      "kind": "table-table",
+      "source": { "tableId": "tenants" },
+      "target": { "tableId": "projects" },
+      "cardinality": "1:N",
+      "comment": "租户 ↔ 项目空间（表级）"
+    },
+    {
+      "id": "projects-tasks-table",
+      "kind": "table-table",
+      "source": { "tableId": "projects" },
+      "target": { "tableId": "tasks" },
+      "cardinality": "1:N",
+      "comment": "项目 ↔ 任务（表级）"
+    },
+    {
+      "id": "users-notifications-table",
+      "kind": "table-table",
+      "source": { "tableId": "users" },
+      "target": { "tableId": "notifications" },
+      "cardinality": "1:N",
+      "comment": "用户 ↔ 通知（表级）"
+    },
+    {
+      "id": "roles-permissions-table",
+      "kind": "table-table",
+      "source": { "tableId": "roles" },
+      "target": { "tableId": "permissions" },
+      "cardinality": "N:M",
+      "comment": "角色 ↔ 权限（经 role_permissions，表级示意）"
+    }
+  ]
+}

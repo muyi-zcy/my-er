@@ -1,70 +1,106 @@
-# Getting Started with Create React App
+# MY-ER
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+基于 Web 的 **实体关系（ER）图可视化设计器**。在无限画布上拖拽建表、维护字段、绘制关系线；设计结果以 **JSON（`ErDiagram`）** 为唯一结构化载体，便于导入导出与后续对接 SQL、数据库等适配层。
 
-## Available Scripts
+## 功能概览
 
-In the project directory, you can run:
+| 能力 | 说明 |
+|------|------|
+| 可视化建模 | 创建表、编辑表名/注释、增删改字段、拖拽排序字段 |
+| 关系连线 | 支持 **表↔表**、**字段↔表**、**字段↔字段** 三种粒度；表级关系为虚线贝塞尔曲线 |
+| 基数标注 | 关系线可切换 `1:1` / `1:N` / `N:1` / `N:M` |
+| JSON 交换 | 工具栏导入/导出 `.json`，经校验后 `load` / `getDiagram` |
+| 空白启动 | 默认空白画布；示例 ER 图见 `examples/shop-er.json`，可通过工具栏导入 |
 
-### `npm start`
+## 架构原则
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+**画布只认 JSON**：画布层仅接受与产出 `ErDiagram`；SQL、数据库等外部能力经适配器与 JSON 双向转换，不直连画布内核。
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+```text
+  SQL / 数据库 / 其他格式
+           │
+           ▼
+    ┌──────────────┐
+    │  IO 适配层    │  ← 规划中（SqlAdapter、DbAdapter）
+    └──────────────┘
+           │ ErDiagram JSON
+           ▼
+    ┌──────────────┐
+    │  画布 Canvas  │  load / getDiagram
+    └──────────────┘
+```
 
-### `npm test`
+详细需求与里程碑见 [docs/ER-DESIGNER-REQUIREMENTS.md](docs/ER-DESIGNER-REQUIREMENTS.md)。
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 技术栈
 
-### `npm run build`
+- [React](https://react.dev/) 19 + [Create React App](https://create-react-app.dev/)（[react-app-rewired](https://github.com/timarney/react-app-rewired)）
+- [@antv/x6](https://x6.antv.antgroup.com/) + [@antv/x6-react-shape](https://x6.antv.antgroup.com/tutorial/intermediate/react)
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 快速开始
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+# 安装依赖
+npm install
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+# 开发模式（默认 http://localhost:3000）
+npm start
 
-### `npm run eject`
+# 生产构建
+npm run build
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+# 单元测试
+npm test
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 项目结构
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```text
+src/
+├── components/          # UI：画布、表节点、工具栏、对话框、右键菜单
+├── canvas/              # X6 图实例、画布动作、图 ↔ 模型同步
+├── graph/               # 连接桩、贝塞尔连接器、关系推断
+├── model/               # ErDiagram 领域模型、校验、图数据转换
+├── io/                  # JSON 文件读写
+└── constants/           # 字段数据类型等
+examples/shop-er.json           # 简单示例（商城 3 表）
+examples/saas-platform-er.json  # 复杂示例（SaaS 22 表，含三种关系类型）
+docs/                    # 需求与设计文档
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## ErDiagram JSON 契约（摘要）
 
-## Learn More
+顶层结构：
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```json
+{
+  "schemaVersion": "1.0.0",
+  "metadata": { "name": "shop-er", "dialect": "mysql" },
+  "tables": [ /* 表：id、name、comment、position、columns */ ],
+  "relationships": [ /* 关系：kind、source、target、cardinality */ ]
+}
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+- `relationships[].kind`：`table-table` | `field-table` | `field-field`
+- `relationships[].cardinality`（可选）：`1:1` | `1:N` | `N:1` | `N:M`
 
-### Code Splitting
+完整字段约定与校验规则见 `src/model/erDiagram.js`、`src/model/validateDiagram.js`。
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## 画布 API（概念层）
 
-### Analyzing the Bundle Size
+| 方法 | 说明 |
+|------|------|
+| `load(diagram)` | 全量加载并渲染；校验失败则拒绝 |
+| `getDiagram()` | 返回当前模型快照 |
+| `addTable` / `addField` 等 | 通过工具栏与画布内交互触发 |
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## 路线图
 
-### Making a Progressive Web App
+- [x] Phase 1：画布建模、表/字段编辑、关系连线
+- [x] JSON 导入导出与校验
+- [ ] SqlAdapter：SQL ↔ JSON
+- [ ] DbAdapter：数据库元数据 ↔ JSON（可选）
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## 许可证
 
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+私有项目（`package.json` 中 `"private": true`）。
