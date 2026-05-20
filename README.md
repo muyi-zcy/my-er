@@ -12,6 +12,12 @@
 | JSON 交换 | 工具栏导入/导出 `.json`，经校验后 `load` / `getDiagram` |
 | 空白启动 | 默认空白画布；示例 ER 图见 `examples/shop-er.json`，可通过工具栏导入 |
 
+## 示例预览
+
+导入 `examples/shop-er.json` 后的画布效果：
+
+![商城 ER 图示例](examples/shop-er.png)
+
 ## 架构原则
 
 **画布只认 JSON**：画布层仅接受与产出 `ErDiagram`；SQL、数据库等外部能力经适配器与 JSON 双向转换，不直连画布内核。
