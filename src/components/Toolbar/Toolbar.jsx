@@ -1,7 +1,9 @@
 import { useRef, useState, useCallback } from 'react';
 import { downloadJson, readJsonFile } from '../../io/jsonFile';
+import { sqlToDiagram } from '../../io/sqlAdapter';
 import { validateDiagram } from '../../model/validateDiagram';
 import { normalizeDiagram } from '../../model/diagramOps';
+import SqlImportDialog from '../Dialog/SqlImportDialog';
 import './Toolbar.css';
 
 /**
@@ -12,6 +14,7 @@ import './Toolbar.css';
 export default function Toolbar({ canvasRef }) {
   const fileInputRef = useRef(/** @type {HTMLInputElement | null} */ (null));
   const [message, setMessage] = useState(/** @type {{ type: 'ok' | 'err', text: string } | null} */ (null));
+  const [sqlDialogOpen, setSqlDialogOpen] = useState(false);
 
   const showMessage = useCallback((type, text) => {
     setMessage({ type, text });
@@ -69,6 +72,32 @@ export default function Toolbar({ canvasRef }) {
     }
   };
 
+  const handleSqlImport = (sql) => {
+    const parsed = sqlToDiagram(sql);
+    if (!parsed.ok) {
+      showMessage('err', parsed.error);
+      return;
+    }
+
+    const diagram = normalizeDiagram(parsed.diagram);
+    const errors = validateDiagram(diagram);
+    if (errors.length > 0) {
+      showMessage('err', errors.join('；'));
+      return;
+    }
+
+    const result = canvasRef.current?.load(diagram);
+    if (!result?.ok) {
+      showMessage('err', result?.errors?.join('；') || '导入失败');
+      return;
+    }
+
+    setSqlDialogOpen(false);
+    const tableCount = diagram.tables.length;
+    const relCount = diagram.relationships.length;
+    showMessage('ok', `已导入 ${tableCount} 张表${relCount > 0 ? `、${relCount} 条关系` : ''}`);
+  };
+
   return (
     <div className="toolbar">
       <div className="toolbar-spacer" />
@@ -76,6 +105,9 @@ export default function Toolbar({ canvasRef }) {
       <div className="toolbar-group">
         <button type="button" className="toolbar-btn" onClick={handleImportClick}>
           导入 JSON
+        </button>
+        <button type="button" className="toolbar-btn" onClick={() => setSqlDialogOpen(true)}>
+          导入 SQL
         </button>
         <button type="button" className="toolbar-btn" onClick={handleExport}>
           导出 JSON
@@ -93,6 +125,10 @@ export default function Toolbar({ canvasRef }) {
         <div className={`toolbar-message ${message.type}`} role="status">
           {message.text}
         </div>
+      ) : null}
+
+      {sqlDialogOpen ? (
+        <SqlImportDialog onImport={handleSqlImport} onClose={() => setSqlDialogOpen(false)} />
       ) : null}
     </div>
   );

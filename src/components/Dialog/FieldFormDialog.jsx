@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { DATA_TYPES } from '../../constants/dataTypes';
+import FieldColorPicker from '../FieldColor/FieldColorPicker';
 import './dialog.css';
 
 /**
@@ -9,13 +10,17 @@ import './dialog.css';
  *   initialDataType?: string,
  *   initialNullable?: boolean,
  *   initialPrimaryKey?: boolean,
+ *   initialComment?: string,
  *   initialUnique?: boolean,
+ *   initialColor?: string,
  *   onSubmit: (payload: {
  *     name: string,
  *     dataType: string,
+ *     comment: string,
  *     nullable: boolean,
  *     primaryKey: boolean,
  *     unique: boolean,
+ *     color?: string | null,
  *   }) => void,
  *   onClose: () => void,
  * }} props
@@ -26,15 +31,19 @@ export default function FieldFormDialog({
   initialDataType = 'varchar(255)',
   initialNullable = true,
   initialPrimaryKey = false,
+  initialComment = '',
   initialUnique = false,
+  initialColor,
   onSubmit,
   onClose,
 }) {
   const [name, setName] = useState(initialName);
+  const [comment, setComment] = useState(initialComment);
   const [dataType, setDataType] = useState(initialDataType);
   const [nullable, setNullable] = useState(initialNullable);
   const [primaryKey, setPrimaryKey] = useState(initialPrimaryKey);
   const [unique, setUnique] = useState(initialUnique);
+  const [color, setColor] = useState(initialColor);
   const [error, setError] = useState('');
 
   const handleSubmit = (e) => {
@@ -46,9 +55,11 @@ export default function FieldFormDialog({
     onSubmit({
       name: name.trim(),
       dataType,
+      comment: comment.trim(),
       nullable: primaryKey ? false : nullable,
       primaryKey,
       unique,
+      color: color || null,
     });
   };
 
@@ -98,6 +109,21 @@ export default function FieldFormDialog({
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="er-form-row">
+              <span className="er-form-label-text">标记颜色</span>
+              <FieldColorPicker value={color} onChange={setColor} />
+            </div>
+
+            <div className="er-form-row">
+              <label htmlFor="field-comment">描述</label>
+              <textarea
+                id="field-comment"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="字段注释（可选）"
+              />
             </div>
 
             {mode === 'edit' ? (

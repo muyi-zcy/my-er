@@ -4,12 +4,21 @@ import '@antv/x6-react-shape/es/node';
 import '@antv/x6-react-shape/es/view';
 import { register } from '@antv/x6-react-shape';
 import ERTableNode from '../components/TableNode/TableNode';
-import { TABLE_SHAPE, EDGE_SHAPE, NODE_WIDTH } from './constants';
+import TextAnnotationNode from '../components/TextAnnotationNode/TextAnnotationNode';
+import {
+  TABLE_SHAPE,
+  TEXT_ANNOTATION_SHAPE,
+  EDGE_SHAPE,
+  NODE_WIDTH,
+  TEXT_ANNOTATION_MIN_WIDTH,
+  TEXT_ANNOTATION_MIN_HEIGHT,
+} from './constants';
 import {
   registerBezierConnectors,
   BEZIER_ROUTER,
   CONNECTOR_CUBIC,
 } from './bezierConnectors';
+import { buildRelationshipLabels } from './edgeLabels';
 import { theme } from '../theme';
 
 let registered = false;
@@ -28,6 +37,14 @@ export function registerErShapes() {
     effect: ['data', 'ports', 'size'],
   });
 
+  register({
+    shape: TEXT_ANNOTATION_SHAPE,
+    width: TEXT_ANNOTATION_MIN_WIDTH,
+    height: TEXT_ANNOTATION_MIN_HEIGHT,
+    component: TextAnnotationNode,
+    effect: ['data', 'size'],
+  });
+
   // X6 3.x 无 isEdgeRegistered；第三个参数 force 覆盖已有注册
   Graph.registerEdge(
     EDGE_SHAPE,
@@ -42,26 +59,7 @@ export function registerErShapes() {
         targetMarker: { name: 'classic', size: 7 },
       },
     },
-    labels: [
-      {
-        attrs: {
-          text: {
-            text: '1:N',
-            fill: theme.edgeLabelText,
-            fontSize: 11,
-            fontWeight: 500,
-          },
-          rect: {
-            fill: theme.edgeLabelBg,
-            stroke: theme.border,
-            strokeWidth: 1,
-            rx: 4,
-            ry: 4,
-          },
-        },
-        position: 0.5,
-      },
-    ],
+    labels: buildRelationshipLabels({ cardinality: '1:N' }),
     },
     true,
   );

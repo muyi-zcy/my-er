@@ -54,10 +54,41 @@ export function tablePortId(side) {
  */
 export function resolveConnectionPort(tableId, node, otherNode, columnId) {
   const side = pickSide(node, otherNode);
+  const portId = fieldPortId(columnId, side);
+  const useField = columnId && node.getPorts().some((p) => p.id === portId);
   return {
     cell: tableId,
-    port: columnId ? fieldPortId(columnId, side) : tablePortId(side),
+    port: useField ? portId : tablePortId(side),
   };
+}
+
+/**
+ * @param {import('@antv/x6').Graph} graph
+ * @param {string} tableId
+ * @returns {Set<string>}
+ */
+export function getConnectedColumnIds(graph, tableId) {
+  const node = graph.getCellById(tableId);
+  if (!node?.isNode()) return new Set();
+
+  /** @type {Set<string>} */
+  const ids = new Set();
+  graph.getConnectedEdges(node).forEach((edge) => {
+    const source = edge.getSource();
+    const target = edge.getTarget();
+    const sourceId = typeof source.cell === 'string' ? source.cell : source.cell?.id;
+    const targetId = typeof target.cell === 'string' ? target.cell : target.cell?.id;
+
+    if (sourceId === tableId) {
+      const colId = parseColumnId(source.port);
+      if (colId) ids.add(colId);
+    }
+    if (targetId === tableId) {
+      const colId = parseColumnId(target.port);
+      if (colId) ids.add(colId);
+    }
+  });
+  return ids;
 }
 
 /**

@@ -4,6 +4,7 @@ import { syncTableNode } from './tableNodeSync';
 import { uniqueId, uniqueTableName } from '../model/diagramOps';
 import { isTableNameAvailable } from '../model/validateDiagram';
 import { TABLE_SHAPE } from '../graph/constants';
+import { normalizeFieldColor } from '../constants/fieldColors';
 
 export { reorderColumnList } from '../model/columnOrder';
 
@@ -19,7 +20,7 @@ export function slugify(name) {
 }
 
 /**
- * @param {Array<{ id?: string, name: string, dataType: string }>} rows
+ * @param {Array<{ id?: string, name: string, dataType: string, comment?: string }>} rows
  * @param {Column[]} [existingColumns]
  * @returns {{ columns: Column[], error?: string }}
  */
@@ -43,6 +44,7 @@ export function buildColumnsFromRows(rows, existingColumns = []) {
     usedIds.push(id);
 
     const isIdField = name === 'id' && columns.length === 0 && !existing;
+    const comment = (row.comment ?? existing?.comment ?? '').trim();
     columns.push({
       id,
       name,
@@ -51,7 +53,8 @@ export function buildColumnsFromRows(rows, existingColumns = []) {
       primaryKey: existing?.primaryKey ?? isIdField,
       unique: existing?.unique ?? false,
       defaultValue: existing?.defaultValue,
-      comment: existing?.comment,
+      ...(comment ? { comment } : {}),
+      ...(existing?.color ? { color: existing.color } : {}),
     });
   }
 
@@ -92,10 +95,12 @@ export function upsertTable(diagram, graph, payload) {
 
   if (tableId) {
     const table = diagram.tables.find((t) => t.id === tableId);
-    const node = graph.getCellById(tableId);
-    if (!table || !node || node.shape !== TABLE_SHAPE) {
+    if (!table) {
       return { ok: false, error: '表不存在' };
     }
+
+    const node = graph.getCellById(tableId);
+    const onCanvas = node?.isNode() && node.shape === TABLE_SHAPE;
 
     const removedColumnIds = table.columns
       .filter((c) => !columns.some((nc) => nc.id === c.id))
@@ -109,7 +114,9 @@ export function upsertTable(diagram, graph, payload) {
       pruneRelationshipsForColumns(diagram, graph, tableId, removedColumnIds);
     }
 
-    syncTableNode(graph, node, table);
+    if (onCanvas) {
+      syncTableNode(graph, node, table);
+    }
     return { ok: true, tableId };
   }
 
@@ -183,17 +190,46 @@ export function updateColumn(diagram, graph, tableId, columnId, patch) {
   );
   if (duplicate) return { ok: false, error: `字段名「${nextName}」已存在` };
 
+  const nextComment =
+    patch.comment !== undefined ? patch.comment.trim() : column.comment?.trim() || '';
   Object.assign(column, {
     name: nextName,
     dataType: patch.dataType ?? column.dataType,
     nullable: patch.nullable ?? column.nullable,
     primaryKey: patch.primaryKey ?? column.primaryKey,
     unique: patch.unique ?? column.unique,
-    comment: patch.comment ?? column.comment,
   });
+  if (nextComment) {
+    column.comment = nextComment;
+  } else {
+    delete column.comment;
+  }
+
+  if (patch.color !== undefined) {
+    const normalized = normalizeFieldColor(patch.color);
+    if (normalized) {
+      column.color = normalized;
+    } else {
+      delete column.color;
+    }
+  }
 
   syncTableNode(graph, node, table, { portMode: 'none' });
   return { ok: true };
+}
+
+/**
+ * @param {ErDiagram} diagram
+ * @param {import('@antv/x6').Graph} graph
+ * @param {string} tableId
+ * @param {string} columnId
+ * @param {string | null | undefined} color
+ */
+export function setColumnColor(diagram, graph, tableId, columnId, color) {
+  const normalized = color ? normalizeFieldColor(color) : undefined;
+  return updateColumn(diagram, graph, tableId, columnId, {
+    color: normalized || '',
+  });
 }
 
 /**

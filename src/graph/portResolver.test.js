@@ -1,14 +1,8 @@
 import {
-  pickSideFromPositions,
-  parseColumnId,
   fieldPortId,
-  tablePortId,
+  parseColumnId,
+  getConnectedColumnIds,
 } from './portResolver';
-
-test('pickSideFromPositions chooses side facing the other node', () => {
-  expect(pickSideFromPositions(0, 400)).toBe('right');
-  expect(pickSideFromPositions(400, 0)).toBe('left');
-});
 
 test('parseColumnId supports left/right and legacy in/out', () => {
   expect(parseColumnId('field-user_id-left')).toBe('user_id');
@@ -16,7 +10,27 @@ test('parseColumnId supports left/right and legacy in/out', () => {
   expect(parseColumnId('field-user_id-in')).toBe('user_id');
 });
 
-test('port id helpers', () => {
+test('fieldPortId', () => {
   expect(fieldPortId('id', 'left')).toBe('field-id-left');
-  expect(tablePortId('right')).toBe('table-right');
+});
+
+test('getConnectedColumnIds collects field ports on both ends', () => {
+  const edges = [
+    {
+      getSource: () => ({ cell: 'orders', port: 'field-user_id-right' }),
+      getTarget: () => ({ cell: 'users', port: 'field-id-left' }),
+    },
+    {
+      getSource: () => ({ cell: 'orders', port: 'table-right' }),
+      getTarget: () => ({ cell: 'products', port: 'table-left' }),
+    },
+  ];
+
+  const graph = {
+    getCellById: (id) => (id === 'orders' ? { isNode: () => true } : null),
+    getConnectedEdges: () => edges,
+  };
+
+  const ids = getConnectedColumnIds(/** @type {*} */ (graph), 'orders');
+  expect([...ids]).toEqual(['user_id']);
 });

@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { columnKeyType } from '../../model/erDiagram';
-import { tableHeight } from '../../graph/constants';
+import { isDefaultFieldColumn } from '../../model/defaultFields';
+import { columnRowHeight, tableHeight, tableHeaderHeight } from '../../graph/constants';
+import { fieldColorBackground, resolveFieldColorDisplay } from '../../constants/fieldColors';
+import { getDisplayColumns } from '../../model/fieldDisplay';
 
 const BADGES = {
   primary: 'PK',
@@ -15,8 +18,28 @@ function readSnapshot(node) {
     name: data.name || '',
     comment: data.comment || '',
     columns: Array.isArray(data.columns) ? data.columns : [],
+    collapsed: Boolean(data.collapsed),
+    connectedColumnIds: Array.isArray(data.connectedColumnIds)
+      ? data.connectedColumnIds
+      : [],
+    fieldColorFilter: data.fieldColorFilter || null,
+    showDefaultFields: data.showDefaultFields !== false,
     revision: data.revision ?? 0,
   };
+}
+
+/**
+ * @param {import('@antv/x6').Node} node
+ */
+function fireToggleCollapse(node) {
+  const canvas = document.querySelector('.er-canvas');
+  if (!canvas) return;
+  canvas.dispatchEvent(
+    new CustomEvent('er-toggle-collapse', {
+      bubbles: false,
+      detail: { tableId: node.id },
+    }),
+  );
 }
 
 /**
@@ -69,6 +92,7 @@ function fireReorderColumn(node, columnId, toIndex) {
  *   dropIndex: number | null,
  *   onDragStart: (columnId: string) => void,
  *   onDragEnd: () => void,
+ *   fieldColorFilter: string | null,
  *   onDragOver: (index: number) => void,
  *   onDrop: (index: number) => void,
  * }} props
@@ -76,6 +100,7 @@ function fireReorderColumn(node, columnId, toIndex) {
 function FieldRow({
   col,
   index,
+  fieldColorFilter,
   onFieldContextMenu,
   dragColumnId,
   dropIndex,
@@ -85,13 +110,27 @@ function FieldRow({
   onDrop,
 }) {
   const keyType = columnKeyType(col);
+  const isDefault = isDefaultFieldColumn(col);
+  const hasFieldComment = Boolean(col.comment?.trim());
   const isDragging = dragColumnId === col.id;
   const isDropTarget = dropIndex === index && dragColumnId && dragColumnId !== col.id;
+  const fieldColor = resolveFieldColorDisplay(col.color, fieldColorFilter);
+  const colorBg = fieldColor ? fieldColorBackground(fieldColor) : undefined;
 
   return (
     <div
       data-column-id={col.id}
-      className={`er-table-field ${index % 2 === 0 ? 'even' : 'odd'} ${keyType || ''}${isDragging ? ' dragging' : ''}${isDropTarget ? ' drop-target' : ''}`}
+      className={`er-table-field ${index % 2 === 0 ? 'even' : 'odd'} ${keyType || ''}${isDefault ? ' is-default-field' : ''}${hasFieldComment ? ' has-desc' : ''}${fieldColor ? ' has-color' : ''}${isDragging ? ' dragging' : ''}${isDropTarget ? ' drop-target' : ''}`}
+      style={{
+        minHeight: columnRowHeight(col),
+        ...(fieldColor
+          ? {
+              borderLeft: `3px solid ${fieldColor}`,
+              paddingLeft: 2,
+              backgroundColor: colorBg,
+            }
+          : {}),
+      }}
       onContextMenu={onFieldContextMenu}
       onDragOver={(e) => {
         e.preventDefault();
@@ -124,9 +163,31 @@ function FieldRow({
       >
         ⋮⋮
       </span>
-      <span className="er-field-badge">{keyType ? BADGES[keyType] : ''}</span>
-      <span className="er-field-name">{col.name}</span>
-      <span className="er-field-type">{col.dataType}</span>
+      {isDefault ? (
+        <span className="er-field-badge er-field-badge-default" title="默认字段">
+          DF
+        </span>
+      ) : null}
+      {keyType ? <span className="er-field-badge">{BADGES[keyType]}</span> : null}
+      {fieldColor ? (
+        <span
+          className="er-field-color-dot"
+          style={{ backgroundColor: fieldColor }}
+          title="字段颜色"
+          aria-hidden
+        />
+      ) : null}
+      <div className="er-field-main">
+        <div className="er-field-line">
+          <span className="er-field-name">{col.name}</span>
+          <span className="er-field-type">{col.dataType}</span>
+        </div>
+        {hasFieldComment ? (
+          <p className="er-field-desc" title={col.comment}>
+            {col.comment}
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -153,8 +214,21 @@ export default function ERTableNode({ node }) {
     };
   }, [node]);
 
-  const { name, comment, columns } = snap;
-  const height = tableHeight(columns.length);
+  const { name, comment, columns, collapsed, connectedColumnIds, fieldColorFilter, showDefaultFields } =
+    snap;
+  const hasComment = Boolean(comment?.trim());
+  const displayColumns = getDisplayColumns(columns, {
+    collapsed,
+    connectedColumnIds,
+    showDefaultFields,
+  });
+  const height = tableHeight(
+    columns,
+    collapsed,
+    hasComment,
+    collapsed ? connectedColumnIds : undefined,
+    showDefaultFields,
+  );
 
   const onHeaderContextMenu = useCallback(
     (e) => {
@@ -201,31 +275,78 @@ export default function ERTableNode({ node }) {
     [columns, handleDragEnd, node],
   );
 
+  const onToggleCollapse = useCallback(
+    (e) => {
+      e.stopPropagation();
+      fireToggleCollapse(node);
+    },
+    [node],
+  );
+
   return (
-    <div className="er-table" style={{ height }} key={snap.revision}>
-      <div className="er-table-header" onContextMenu={onHeaderContextMenu}>
-        <span className="er-table-name">{name}</span>
-        {comment ? <span className="er-table-comment" title={comment}>?</span> : null}
+    <div
+      className={`er-table${collapsed ? ' collapsed' : ''}${fieldColorFilter ? ' color-filtered' : ''}${collapsed && displayColumns.length > 0 ? ' collapsed-partial' : ''}`}
+      style={{ height }}
+      key={snap.revision}
+    >
+      <div
+        className={`er-table-header${hasComment ? ' has-desc' : ''}`}
+        style={{ minHeight: tableHeaderHeight(hasComment) }}
+        onContextMenu={onHeaderContextMenu}
+      >
+        <div className="er-table-header-main">
+          <span className="er-table-name">{name}</span>
+          {collapsed && columns.length > 0 ? (
+            <span className="er-table-field-count">
+              {displayColumns.length > 0 && displayColumns.length < columns.length
+                ? `${displayColumns.length}/${columns.length}`
+                : columns.length}
+            </span>
+          ) : null}
+        </div>
+        {hasComment ? (
+          <p className="er-table-desc" title={comment}>
+            {comment}
+          </p>
+        ) : null}
       </div>
-      <div className="er-table-fields">
-        {columns.length === 0 ? (
-          <div className="er-table-empty">No fields</div>
-        ) : (
-          columns.map((col, i) => (
-            <FieldRow
-              key={col.id}
-              col={col}
-              index={i}
-              onFieldContextMenu={onFieldContextMenu}
-              dragColumnId={dragColumnId}
-              dropIndex={dropIndex}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-            />
-          ))
-        )}
+      {!collapsed || displayColumns.length > 0 ? (
+        <div className="er-table-fields">
+          {!collapsed && columns.length === 0 ? (
+            <div className="er-table-empty">No fields</div>
+          ) : (
+            displayColumns.map((col, i) => (
+              <FieldRow
+                key={col.id}
+                col={col}
+                index={i}
+                fieldColorFilter={fieldColorFilter}
+                onFieldContextMenu={onFieldContextMenu}
+                dragColumnId={dragColumnId}
+                dropIndex={dropIndex}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
+              />
+            ))
+          )}
+        </div>
+      ) : null}
+      <div className="er-table-footer" onContextMenu={onHeaderContextMenu}>
+        <button
+          type="button"
+          className="er-table-collapse-btn"
+          title={collapsed ? '展开字段' : '折叠字段'}
+          aria-label={collapsed ? '展开字段' : '折叠字段'}
+          aria-expanded={!collapsed}
+          onClick={onToggleCollapse}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <span className="er-table-collapse-icon" aria-hidden>
+            {collapsed ? '▴' : '▾'}
+          </span>
+        </button>
       </div>
     </div>
   );

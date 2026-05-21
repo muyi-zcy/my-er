@@ -1,14 +1,18 @@
 import {
   NODE_WIDTH,
-  HEADER_HEIGHT,
-  FIELD_ROW_HEIGHT,
   TABLE_SHAPE,
+  TEXT_ANNOTATION_SHAPE,
   EDGE_SHAPE,
   tableHeight,
+  tableHeaderHeight,
+  fieldPortYPositions,
 } from '../graph/constants';
+import { measureAnnotationSize } from '../canvas/annotationActions';
 import { resolveEndpointFromLayout } from '../graph/portResolver';
 import { BEZIER_ROUTER, connectorForKind } from '../graph/bezierConnectors';
+import { buildRelationshipLabels } from '../graph/edgeLabels';
 import { theme } from '../theme';
+import { getDisplayColumns } from './fieldDisplay';
 
 /** @typedef {import('./erDiagram').ErDiagram} ErDiagram */
 /** @typedef {import('./erDiagram').Table} Table */
@@ -26,7 +30,7 @@ function defaultPosition(table, index) {
   }
   const row = Math.floor(index / LAYOUT.cols);
   const col = index % LAYOUT.cols;
-  const h = tableHeight(table.columns.length);
+  const h = tableHeight(table.columns);
   return {
     x: col * (NODE_WIDTH + LAYOUT.spacingX),
     y: row * (h + LAYOUT.spacingY),
@@ -35,8 +39,28 @@ function defaultPosition(table, index) {
 
 /**
  * @param {import('./erDiagram').Column[]} columns
+ * @param {{
+ *   collapsed?: boolean,
+ *   hasComment?: boolean,
+ *   connectedColumnIds?: Set<string>,
+ *   displayColumns?: import('./erDiagram').Column[],
+ * }} [options]
  */
-export function buildTablePorts(columns) {
+export function buildTablePorts(columns, options = {}) {
+  const collapsed = Boolean(options.collapsed);
+  const hasComment = Boolean(options.hasComment);
+  const connected = options.connectedColumnIds;
+  const visibleColumns =
+    options.displayColumns ??
+    getDisplayColumns(columns, {
+      collapsed,
+      connectedColumnIds: connected ? [...connected] : [],
+      showDefaultFields: true,
+    });
+  const header = tableHeaderHeight(hasComment);
+  const nodeHeight = tableHeight(columns, collapsed, hasComment, collapsed ? connected : undefined);
+  const tablePortY =
+    collapsed && visibleColumns.length === 0 ? nodeHeight / 2 : header / 2;
   const portGroups = {
     table: {
       position: { name: 'absolute' },
@@ -81,13 +105,18 @@ export function buildTablePorts(columns) {
 
   const items = [
     { id: 'table-top', group: 'table', args: { x: '50%', y: 0 } },
-    { id: 'table-right', group: 'table', args: { x: '100%', y: HEADER_HEIGHT / 2 } },
+    { id: 'table-right', group: 'table', args: { x: '100%', y: tablePortY } },
     { id: 'table-bottom', group: 'table', args: { x: '50%', y: '100%' } },
-    { id: 'table-left', group: 'table', args: { x: 0, y: HEADER_HEIGHT / 2 } },
+    { id: 'table-left', group: 'table', args: { x: 0, y: tablePortY } },
   ];
 
-  columns.forEach((col, i) => {
-    const y = HEADER_HEIGHT + i * FIELD_ROW_HEIGHT + FIELD_ROW_HEIGHT / 2;
+  const portColumns = collapsed ? visibleColumns : columns;
+  const yByColumn = new Map(
+    fieldPortYPositions(portColumns, header).map((p) => [p.columnId, p.y]),
+  );
+  portColumns.forEach((col) => {
+    const y = yByColumn.get(col.id);
+    if (y == null) return;
     items.push(
       { id: `field-${col.id}-left`, group: 'field-left', args: { y } },
       { id: `field-${col.id}-right`, group: 'field-right', args: { y } },
@@ -98,22 +127,19 @@ export function buildTablePorts(columns) {
 }
 
 /**
- * @param {Relationship} rel
- */
-function edgeLabel(cardinality) {
-  return cardinality || '1:N';
-}
-
-/**
  * @param {ErDiagram} diagram
  */
 export function diagramToGraph(diagram) {
   const positions = new Map();
+  const hiddenTableIds = new Set(
+    diagram.tables.filter((t) => t.hidden).map((t) => t.id),
+  );
+  const visibleTables = diagram.tables.filter((t) => !t.hidden);
 
-  const nodes = diagram.tables.map((table, index) => {
+  const tableNodes = visibleTables.map((table, index) => {
     const pos = defaultPosition(table, index);
     positions.set(table.id, pos);
-    const height = tableHeight(table.columns.length);
+    const height = tableHeight(table.columns, false, Boolean(table.comment?.trim()));
     return {
       id: table.id,
       shape: TABLE_SHAPE,
@@ -131,7 +157,31 @@ export function diagramToGraph(diagram) {
     };
   });
 
-  const edges = diagram.relationships.map((rel) => ({
+  const annotationNodes = (diagram.annotations || []).map((ann) => {
+    const { width, height } = measureAnnotationSize(ann.text);
+    return {
+      id: ann.id,
+      shape: TEXT_ANNOTATION_SHAPE,
+      x: ann.position?.x ?? 0,
+      y: ann.position?.y ?? 0,
+      width: ann.width ?? width,
+      height: ann.height ?? height,
+      data: {
+        annotationId: ann.id,
+        text: ann.text,
+      },
+    };
+  });
+
+  const nodes = [...tableNodes, ...annotationNodes];
+
+  const edges = diagram.relationships
+    .filter(
+      (rel) =>
+        !hiddenTableIds.has(rel.source.tableId) &&
+        !hiddenTableIds.has(rel.target.tableId),
+    )
+    .map((rel) => ({
     id: rel.id,
     shape: EDGE_SHAPE,
     router: BEZIER_ROUTER,
@@ -144,27 +194,12 @@ export function diagramToGraph(diagram) {
       cardinality: rel.cardinality || '1:N',
       comment: rel.comment,
     },
-    labels: [
-      {
-        attrs: {
-          text: {
-            text: edgeLabel(rel.cardinality),
-            fill: theme.edgeLabelText,
-            fontSize: 11,
-            fontWeight: 500,
-          },
-          rect: {
-            fill: theme.edgeLabelBg,
-            stroke: theme.border,
-            strokeWidth: 1,
-            rx: 4,
-            ry: 4,
-          },
-        },
-        position: 0.5,
-      },
-    ],
+    labels: buildRelationshipLabels({
+      cardinality: rel.cardinality,
+      comment: rel.comment,
+    }),
   }));
 
   return { nodes, edges };
 }
+

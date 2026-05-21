@@ -1,7 +1,10 @@
 import { Graph } from '@antv/x6';
 import { EDGE_SHAPE } from '../graph/constants';
-import { inferRelationshipKind, nextCardinality } from '../graph/relationshipUtils';
+import { buildRelationshipLabels } from '../graph/edgeLabels';
+import { inferRelationshipKind } from '../graph/relationshipUtils';
+import { cycleRelationshipCardinality } from './relationshipActions';
 import { rerouteEdge, rerouteNodeEdges } from '../graph/portResolver';
+import { refreshCollapsedTableIfNeeded } from './tableNodeSync';
 import { BEZIER_ROUTER, CONNECTOR_CUBIC } from '../graph/bezierConnectors';
 import { theme } from '../theme';
 
@@ -15,7 +18,10 @@ export function createErGraph(container, options = {}) {
     background: { color: theme.canvasBg },
     grid: { visible: true, type: 'dot', args: { color: theme.grid } },
     mousewheel: { enabled: true, modifiers: 'ctrl', minScale: 0.3, maxScale: 2 },
-    panning: { enabled: true, eventTypes: ['leftMouseDown', 'rightMouseDown'] },
+    panning: {
+      enabled: true,
+      eventTypes: ['leftMouseDown', 'rightMouseDown', 'mouseWheel'],
+    },
     selecting: {
       enabled: true,
       multiple: false,
@@ -36,12 +42,7 @@ export function createErGraph(container, options = {}) {
           router: BEZIER_ROUTER,
           connector: { name: CONNECTOR_CUBIC, args: { direction: 'H' } },
           data: { kind: 'field-field', cardinality: '1:N' },
-          labels: [
-            {
-              attrs: { text: { text: '1:N' } },
-              position: 0.5,
-            },
-          ],
+          labels: buildRelationshipLabels({ cardinality: '1:N' }),
         });
       },
       validateMagnet({ magnet }) {
@@ -64,63 +65,66 @@ export function createErGraph(container, options = {}) {
       kind,
       cardinality,
     });
-    edge.setLabels([
-      {
-        attrs: {
-          text: {
-            text: cardinality,
-            fill: theme.edgeLabelText,
-            fontSize: 11,
-            fontWeight: 500,
-          },
-          rect: {
-            fill: theme.edgeLabelBg,
-            stroke: theme.border,
-            strokeWidth: 1,
-            rx: 4,
-            ry: 4,
-          },
-        },
-        position: 0.5,
-      },
-    ]);
+    edge.setLabels(buildRelationshipLabels({ cardinality }));
 
     if (kind === 'table-table') {
       edge.attr('line/strokeDasharray', '6 4');
     }
 
     rerouteEdge(edge);
+    const sourceId = edge.getSourceCell()?.id;
+    const targetId = edge.getTargetCell()?.id;
+    if (sourceId) refreshCollapsedTableIfNeeded(graph, sourceId);
+    if (targetId) refreshCollapsedTableIfNeeded(graph, targetId);
     options.onDiagramChange?.();
   });
+
+  /** @type {Map<string, ReturnType<typeof setTimeout>>} */
+  const edgeClickTimers = new Map();
 
   graph.on('edge:click', ({ edge, e }) => {
     if (edge.shape !== EDGE_SHAPE) return;
     e.stopPropagation();
 
-    const current = edge.getData()?.cardinality || '1:N';
-    const next = nextCardinality(current);
-    edge.setData({ ...edge.getData(), cardinality: next });
-    edge.setLabels([
-      {
-        attrs: {
-          text: {
-            text: next,
-            fill: theme.edgeLabelText,
-            fontSize: 11,
-            fontWeight: 500,
-          },
-          rect: {
-            fill: theme.edgeLabelBg,
-            stroke: theme.border,
-            strokeWidth: 1,
-            rx: 4,
-            ry: 4,
-          },
-        },
-        position: 0.5,
-      },
-    ]);
-    options.onDiagramChange?.();
+    const edgeId = edge.id;
+    const prev = edgeClickTimers.get(edgeId);
+    if (prev) clearTimeout(prev);
+    edgeClickTimers.set(
+      edgeId,
+      setTimeout(() => {
+        edgeClickTimers.delete(edgeId);
+        cycleRelationshipCardinality(edge);
+        options.onDiagramChange?.();
+      }, 280),
+    );
+  });
+
+  graph.on('edge:dblclick', ({ edge, e }) => {
+    if (edge.shape !== EDGE_SHAPE) return;
+    e.stopPropagation();
+    const prev = edgeClickTimers.get(edge.id);
+    if (prev) {
+      clearTimeout(prev);
+      edgeClickTimers.delete(edge.id);
+    }
+    container.dispatchEvent(
+      new CustomEvent('er-edge-comment-edit', {
+        bubbles: false,
+        detail: { edgeId: edge.id, clientX: e.clientX, clientY: e.clientY },
+      }),
+    );
+  });
+
+  graph.on('edge:mouseup', ({ edge, e }) => {
+    if (edge.shape !== EDGE_SHAPE || e.button !== 2) return;
+    e.preventDefault();
+    e.stopPropagation();
+    container.dispatchEvent(
+      new CustomEvent('er-edge-contextmenu', {
+        bubbles: false,
+        detail: { edgeId: edge.id, clientX: e.clientX, clientY: e.clientY },
+      }),
+    );
   });
 
   graph.on('edge:mouseenter', ({ edge }) => {
@@ -178,8 +182,12 @@ export function createErGraph(container, options = {}) {
     options.onDiagramChange?.();
   });
 
-  graph.on('edge:removed', () => {
+  graph.on('edge:removed', ({ edge }) => {
+    const sourceId = edge.getSourceCell()?.id;
+    const targetId = edge.getTargetCell()?.id;
     options.onDiagramChange?.();
+    if (sourceId) refreshCollapsedTableIfNeeded(graph, sourceId);
+    if (targetId) refreshCollapsedTableIfNeeded(graph, targetId);
   });
 
   return graph;

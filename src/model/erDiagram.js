@@ -11,6 +11,8 @@
  * @property {boolean} [unique]
  * @property {string} [defaultValue]
  * @property {string} [comment]
+ * @property {string} [color] 字段标记色（#RRGGBB），用于分布可视化
+ * @property {string} [defaultFieldId] 关联的默认字段模板 id
  */
 
 /**
@@ -20,6 +22,7 @@
  * @property {string} [comment]
  * @property {{ x: number, y: number }} position
  * @property {Column[]} columns
+ * @property {boolean} [hidden] 为 true 时不在画布显示，仍保留在模型中
  */
 
 /**
@@ -39,11 +42,25 @@
  */
 
 /**
+ * @typedef {Object} TextAnnotation
+ * @property {string} id
+ * @property {string} text
+ * @property {{ x: number, y: number }} position
+ * @property {number} [width]
+ * @property {number} [height]
+ */
+
+/**
  * @typedef {Object} ErDiagram
  * @property {string} schemaVersion
- * @property {{ name?: string, dialect?: string }} [metadata]
+ * @property {{
+ *   name?: string,
+ *   dialect?: string,
+ *   defaultFields?: import('./defaultFields').DefaultField[],
+ * }} [metadata]
  * @property {Table[]} tables
  * @property {Relationship[]} relationships
+ * @property {TextAnnotation[]} [annotations] 画布文字描述
  */
 
 export const SCHEMA_VERSION = '1.0.0';
@@ -55,6 +72,7 @@ export function createEmptyDiagram() {
     metadata: { name: 'untitled', dialect: 'mysql' },
     tables: [],
     relationships: [],
+    annotations: [],
   };
 }
 

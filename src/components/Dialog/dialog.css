@@ -69,7 +69,8 @@
   gap: 6px;
 }
 
-.er-form-row label {
+.er-form-row label,
+.er-form-label-text {
   font-size: 12px;
   font-weight: 500;
   color: #52525b;
@@ -126,6 +127,20 @@
   grid-template-columns: 1fr 140px 32px;
   gap: 8px;
   align-items: center;
+}
+
+.er-field-row-comment {
+  grid-column: 1 / -1;
+  padding: 6px 10px;
+  font-size: 12px;
+  border: 1px solid #d4d4d8;
+  border-radius: 6px;
+  outline: none;
+}
+
+.er-field-row-comment:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
 }
 
 .er-btn {

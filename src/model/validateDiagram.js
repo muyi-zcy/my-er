@@ -89,6 +89,30 @@ export function validateDiagram(diagram) {
     });
   });
 
+  if (d.annotations != null && !Array.isArray(d.annotations)) {
+    errors.push('annotations 必须是数组');
+  } else if (Array.isArray(d.annotations)) {
+    const annotationIds = new Set();
+    d.annotations.forEach((raw, index) => {
+      if (!raw || typeof raw !== 'object') {
+        errors.push(`annotations[${index}] 无效`);
+        return;
+      }
+      const ann = /** @type {Record<string, unknown>} */ (raw);
+      const id = typeof ann.id === 'string' ? ann.id.trim() : '';
+      if (!id) {
+        errors.push(`annotations[${index}] 缺少 id`);
+      } else if (annotationIds.has(id)) {
+        errors.push(`文字描述 id 重复：${id}`);
+      } else {
+        annotationIds.add(id);
+      }
+      if (typeof ann.text !== 'string') {
+        errors.push(`文字描述「${id || index}」缺少 text`);
+      }
+    });
+  }
+
   d.relationships.forEach((raw, index) => {
     if (!raw || typeof raw !== 'object') {
       errors.push(`relationships[${index}] 无效`);

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { DATA_TYPES } from '../../constants/dataTypes';
 import './dialog.css';
 
-/** @typedef {{ id?: string, name: string, dataType: string }} FieldRow */
+/** @typedef {{ id?: string, name: string, dataType: string, comment?: string }} FieldRow */
 
 /**
  * @param {{
@@ -65,6 +65,7 @@ export default function TableFormDialog({
         id: f.id,
         name: f.name.trim(),
         dataType: f.dataType,
+        comment: f.comment?.trim() || '',
       })),
     });
   };
@@ -145,6 +146,12 @@ export default function TableFormDialog({
                   >
                     ×
                   </button>
+                  <input
+                    className="er-field-row-comment"
+                    value={field.comment || ''}
+                    onChange={(e) => updateFieldRow(index, 'comment', e.target.value)}
+                    placeholder="字段描述（可选）"
+                  />
                 </div>
               ))}
             </div>

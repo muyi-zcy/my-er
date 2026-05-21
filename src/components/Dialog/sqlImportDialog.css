@@ -1,0 +1,58 @@
+.er-dialog-sql {
+  width: min(720px, calc(100vw - 32px));
+}
+
+.sql-import-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #71717a;
+}
+
+.sql-import-hint code {
+  font-size: 11px;
+  padding: 1px 4px;
+  background: #f4f4f5;
+  border-radius: 4px;
+}
+
+.er-form-row textarea.sql-import-textarea {
+  min-height: 360px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.sql-import-file-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sql-import-file-input {
+  display: none;
+}
+
+.sql-import-file-count {
+  font-size: 12px;
+  color: #52525b;
+}
+
+.sql-import-file-list {
+  margin: 0;
+  padding: 8px 12px;
+  max-height: 96px;
+  overflow: auto;
+  font-size: 12px;
+  color: #52525b;
+  background: #fafafa;
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  list-style: none;
+}
+
+.sql-import-file-list li + li {
+  margin-top: 4px;
+}

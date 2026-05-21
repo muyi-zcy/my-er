@@ -1,0 +1,572 @@
+{
+  "schemaVersion": "1.0.0",
+  "metadata": {
+    "name": "feature-showcase-er",
+    "dialect": "mysql",
+    "defaultFields": [
+      {
+        "id": "df-id",
+        "name": "id",
+        "dataType": "bigint",
+        "nullable": false,
+        "primaryKey": true,
+        "unique": false,
+        "comment": "主键（默认字段模板，多表同名列关联）",
+        "color": "#9CAF88"
+      },
+      {
+        "id": "df-created-at",
+        "name": "created_at",
+        "dataType": "datetime",
+        "nullable": false,
+        "primaryKey": false,
+        "comment": "创建时间",
+        "color": "#8FA3B8"
+      },
+      {
+        "id": "df-updated-at",
+        "name": "updated_at",
+        "dataType": "datetime",
+        "nullable": true,
+        "primaryKey": false,
+        "comment": "更新时间",
+        "color": "#A89BB0"
+      }
+    ]
+  },
+  "tables": [
+    {
+      "id": "users",
+      "name": "users",
+      "comment": "用户账户（含 PK / UQ / 字段颜色 / 默认字段）",
+      "position": { "x": 40, "y": 80 },
+      "columns": [
+        {
+          "id": "id",
+          "name": "id",
+          "dataType": "bigint",
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "comment": "用户主键",
+          "defaultFieldId": "df-id"
+        },
+        {
+          "id": "email",
+          "name": "email",
+          "dataType": "varchar(255)",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": true,
+          "comment": "登录邮箱",
+          "color": "#C4A5A5"
+        },
+        {
+          "id": "status",
+          "name": "status",
+          "dataType": "varchar(16)",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "defaultValue": "active",
+          "comment": "账户状态",
+          "color": "#7A8F7A"
+        },
+        {
+          "id": "meta",
+          "name": "meta",
+          "dataType": "json",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "comment": "扩展属性 JSON"
+        },
+        {
+          "id": "created_at",
+          "name": "created_at",
+          "dataType": "datetime",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "defaultFieldId": "df-created-at"
+        },
+        {
+          "id": "updated_at",
+          "name": "updated_at",
+          "dataType": "datetime",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "defaultFieldId": "df-updated-at"
+        }
+      ]
+    },
+    {
+      "id": "user_profiles",
+      "name": "user_profiles",
+      "comment": "用户资料（演示 1:1 关系）",
+      "position": { "x": 400, "y": 80 },
+      "columns": [
+        {
+          "id": "id",
+          "name": "id",
+          "dataType": "bigint",
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "defaultFieldId": "df-id"
+        },
+        {
+          "id": "user_id",
+          "name": "user_id",
+          "dataType": "bigint",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": true,
+          "comment": "对应 users.id，一对一",
+          "color": "#8FA3B8"
+        },
+        {
+          "id": "display_name",
+          "name": "display_name",
+          "dataType": "varchar(64)",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "id": "avatar_url",
+          "name": "avatar_url",
+          "dataType": "text",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "id": "created_at",
+          "name": "created_at",
+          "dataType": "datetime",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "defaultFieldId": "df-created-at"
+        },
+        {
+          "id": "updated_at",
+          "name": "updated_at",
+          "dataType": "datetime",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "defaultFieldId": "df-updated-at"
+        }
+      ]
+    },
+    {
+      "id": "categories",
+      "name": "categories",
+      "comment": "商品分类（参与表级虚线关系）",
+      "position": { "x": 760, "y": 80 },
+      "columns": [
+        {
+          "id": "id",
+          "name": "id",
+          "dataType": "bigint",
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "defaultFieldId": "df-id"
+        },
+        {
+          "id": "name",
+          "name": "name",
+          "dataType": "varchar(128)",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "id": "slug",
+          "name": "slug",
+          "dataType": "varchar(64)",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": true,
+          "color": "#C9B8A8"
+        }
+      ]
+    },
+    {
+      "id": "products",
+      "name": "products",
+      "comment": "商品目录",
+      "position": { "x": 40, "y": 360 },
+      "columns": [
+        {
+          "id": "id",
+          "name": "id",
+          "dataType": "bigint",
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "defaultFieldId": "df-id"
+        },
+        {
+          "id": "category_id",
+          "name": "category_id",
+          "dataType": "bigint",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "comment": "所属分类，演示 field-table",
+          "color": "#8FA3B8"
+        },
+        {
+          "id": "sku",
+          "name": "sku",
+          "dataType": "varchar(64)",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": true
+        },
+        {
+          "id": "name",
+          "name": "name",
+          "dataType": "varchar(255)",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "id": "price",
+          "name": "price",
+          "dataType": "decimal(10,2)",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "comment": "单价",
+          "color": "#B8957A"
+        },
+        {
+          "id": "published",
+          "name": "published",
+          "dataType": "boolean",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "defaultValue": "0"
+        },
+        {
+          "id": "created_at",
+          "name": "created_at",
+          "dataType": "datetime",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "defaultFieldId": "df-created-at"
+        },
+        {
+          "id": "updated_at",
+          "name": "updated_at",
+          "dataType": "datetime",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "defaultFieldId": "df-updated-at"
+        }
+      ]
+    },
+    {
+      "id": "orders",
+      "name": "orders",
+      "comment": "订单主表",
+      "position": { "x": 400, "y": 360 },
+      "columns": [
+        {
+          "id": "id",
+          "name": "id",
+          "dataType": "bigint",
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "defaultFieldId": "df-id"
+        },
+        {
+          "id": "user_id",
+          "name": "user_id",
+          "dataType": "bigint",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "comment": "下单用户",
+          "color": "#8FA3B8"
+        },
+        {
+          "id": "order_no",
+          "name": "order_no",
+          "dataType": "uuid",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": true,
+          "comment": "业务单号"
+        },
+        {
+          "id": "total",
+          "name": "total",
+          "dataType": "decimal(10,2)",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "color": "#B8957A"
+        },
+        {
+          "id": "status",
+          "name": "status",
+          "dataType": "varchar(32)",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "color": "#7A8F7A"
+        },
+        {
+          "id": "ordered_on",
+          "name": "ordered_on",
+          "dataType": "date",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "id": "created_at",
+          "name": "created_at",
+          "dataType": "datetime",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "defaultFieldId": "df-created-at"
+        },
+        {
+          "id": "updated_at",
+          "name": "updated_at",
+          "dataType": "datetime",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "defaultFieldId": "df-updated-at"
+        }
+      ]
+    },
+    {
+      "id": "order_items",
+      "name": "order_items",
+      "comment": "订单明细（多对多中间表）",
+      "position": { "x": 760, "y": 360 },
+      "columns": [
+        {
+          "id": "id",
+          "name": "id",
+          "dataType": "bigint",
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "defaultFieldId": "df-id"
+        },
+        {
+          "id": "order_id",
+          "name": "order_id",
+          "dataType": "bigint",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "color": "#8FA3B8"
+        },
+        {
+          "id": "product_id",
+          "name": "product_id",
+          "dataType": "bigint",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "color": "#8FA3B8"
+        },
+        {
+          "id": "quantity",
+          "name": "quantity",
+          "dataType": "int",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "defaultValue": "1"
+        },
+        {
+          "id": "unit_price",
+          "name": "unit_price",
+          "dataType": "decimal(10,2)",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "color": "#B8957A"
+        },
+        {
+          "id": "created_at",
+          "name": "created_at",
+          "dataType": "datetime",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "defaultFieldId": "df-created-at"
+        }
+      ]
+    },
+    {
+      "id": "audit_logs",
+      "name": "audit_logs",
+      "comment": "审计日志（默认 hidden，演示侧栏显示/隐藏）",
+      "position": { "x": 400, "y": 640 },
+      "hidden": true,
+      "columns": [
+        {
+          "id": "id",
+          "name": "id",
+          "dataType": "bigint",
+          "nullable": false,
+          "primaryKey": true,
+          "unique": false,
+          "defaultFieldId": "df-id"
+        },
+        {
+          "id": "actor_id",
+          "name": "actor_id",
+          "dataType": "bigint",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false,
+          "comment": "操作者，演示 field-table",
+          "color": "#8B9099"
+        },
+        {
+          "id": "action",
+          "name": "action",
+          "dataType": "varchar(64)",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "id": "payload",
+          "name": "payload",
+          "dataType": "json",
+          "nullable": true,
+          "primaryKey": false,
+          "unique": false
+        },
+        {
+          "id": "created_at",
+          "name": "created_at",
+          "dataType": "datetime",
+          "nullable": false,
+          "primaryKey": false,
+          "unique": false,
+          "defaultFieldId": "df-created-at"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "user_profiles-user_id-users-id",
+      "kind": "field-field",
+      "source": { "tableId": "user_profiles", "columnId": "user_id" },
+      "target": { "tableId": "users", "columnId": "id" },
+      "cardinality": "1:1",
+      "comment": "user_profiles.user_id → users.id（一对一）"
+    },
+    {
+      "id": "orders-user_id-users-id",
+      "kind": "field-field",
+      "source": { "tableId": "orders", "columnId": "user_id" },
+      "target": { "tableId": "users", "columnId": "id" },
+      "cardinality": "1:N",
+      "comment": "orders.user_id → users.id（一对多）"
+    },
+    {
+      "id": "order_items-product_id-products-id",
+      "kind": "field-field",
+      "source": { "tableId": "order_items", "columnId": "product_id" },
+      "target": { "tableId": "products", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "order_items.product_id → products.id（多对一）"
+    },
+    {
+      "id": "order_items-order_id-orders-id",
+      "kind": "field-field",
+      "source": { "tableId": "order_items", "columnId": "order_id" },
+      "target": { "tableId": "orders", "columnId": "id" },
+      "cardinality": "N:1",
+      "comment": "order_items.order_id → orders.id"
+    },
+    {
+      "id": "orders-products-nm",
+      "kind": "field-field",
+      "source": { "tableId": "order_items", "columnId": "order_id" },
+      "target": { "tableId": "products", "columnId": "id" },
+      "cardinality": "N:M",
+      "comment": "orders ↔ products 多对多（经 order_items）"
+    },
+    {
+      "id": "products-category_id-categories",
+      "kind": "field-table",
+      "source": { "tableId": "products", "columnId": "category_id" },
+      "target": { "tableId": "categories" },
+      "cardinality": "N:1",
+      "comment": "products.category_id → categories（字段连表）"
+    },
+    {
+      "id": "audit_logs-actor_id-users",
+      "kind": "field-table",
+      "source": { "tableId": "audit_logs", "columnId": "actor_id" },
+      "target": { "tableId": "users" },
+      "cardinality": "N:1",
+      "comment": "audit_logs.actor_id → users（隐藏表上的 field-table）"
+    },
+    {
+      "id": "categories-products-table",
+      "kind": "table-table",
+      "source": { "tableId": "categories" },
+      "target": { "tableId": "products" },
+      "cardinality": "1:N",
+      "comment": "分类 ↔ 商品（表级虚线，1:N）"
+    },
+    {
+      "id": "users-orders-table",
+      "kind": "table-table",
+      "source": { "tableId": "users" },
+      "target": { "tableId": "orders" },
+      "cardinality": "1:N",
+      "comment": "用户 ↔ 订单（表级概念关联）"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "ann-title",
+      "text": "MY-ER 功能展示案例\n导入本 JSON 可体验：默认字段、字段颜色、三种关系、四种基数、文字描述、隐藏表等。",
+      "position": { "x": 40, "y": 20 },
+      "width": 520,
+      "height": 56
+    },
+    {
+      "id": "ann-legend",
+      "text": "图例：实线 = 字段级关系 | 虚线 = 表级关系\n右侧「表」面板中 audit_logs 为隐藏表，点击 ◌ 可显示。",
+      "position": { "x": 580, "y": 20 },
+      "width": 400,
+      "height": 48
+    },
+    {
+      "id": "ann-colors",
+      "text": "字段颜色：灰绿=主键模板 | 雾蓝=外键/时间 | 藕粉=邮箱 | 陶土=金额",
+      "position": { "x": 40, "y": 600 },
+      "width": 360,
+      "height": 40
+    }
+  ]
+}

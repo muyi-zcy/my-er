@@ -100,13 +100,25 @@ export function normalizeDiagram(raw) {
   const d = /** @type {Record<string, unknown>} */ (raw && typeof raw === 'object' ? raw : {});
   return {
     schemaVersion: typeof d.schemaVersion === 'string' ? d.schemaVersion : SCHEMA_VERSION,
-    metadata:
-      d.metadata && typeof d.metadata === 'object'
-        ? /** @type {ErDiagram['metadata']} */ (d.metadata)
-        : { name: 'imported', dialect: 'mysql' },
+    metadata: (() => {
+      const raw =
+        d.metadata && typeof d.metadata === 'object'
+          ? /** @type {Record<string, unknown>} */ (d.metadata)
+          : { name: 'imported', dialect: 'mysql' };
+      const defaultFields = Array.isArray(raw.defaultFields)
+        ? /** @type {import('./defaultFields').DefaultField[]} */ (raw.defaultFields)
+        : [];
+      return {
+        ...raw,
+        defaultFields,
+      };
+    })(),
     tables: Array.isArray(d.tables) ? /** @type {Table[]} */ (d.tables) : [],
     relationships: Array.isArray(d.relationships)
       ? /** @type {ErDiagram['relationships']} */ (d.relationships)
+      : [],
+    annotations: Array.isArray(d.annotations)
+      ? /** @type {ErDiagram['annotations']} */ (d.annotations)
       : [],
   };
 }

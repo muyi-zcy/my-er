@@ -13,6 +13,9 @@ jest.mock('./components/Canvas/ERCanvas', () => {
         addField: () => ({ ok: false, error: 'mock' }),
         setTableName: () => ({ ok: true }),
         getSelectedTableId: () => null,
+        selectTable: () => {},
+        setTableHidden: () => ({ ok: true }),
+        openTableEdit: () => {},
       }));
       return React.createElement('div', { 'data-testid': 'er-canvas-mock' });
     }),
@@ -29,5 +32,11 @@ test('renders ER designer title', () => {
 test('renders toolbar actions', () => {
   render(<App />);
   expect(screen.getByRole('button', { name: '导入 JSON' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '导入 SQL' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: '导出 JSON' })).toBeInTheDocument();
+});
+
+test('renders table list panel', () => {
+  render(<App />);
+  expect(screen.getByRole('complementary', { name: '表列表' })).toBeInTheDocument();
 });
