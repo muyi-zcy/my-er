@@ -55,6 +55,7 @@ export function buildColumnsFromRows(rows, existingColumns = []) {
       defaultValue: existing?.defaultValue,
       ...(comment ? { comment } : {}),
       ...(existing?.color ? { color: existing.color } : {}),
+      ...(existing?.defaultFieldId ? { defaultFieldId: existing.defaultFieldId } : {}),
     });
   }
 

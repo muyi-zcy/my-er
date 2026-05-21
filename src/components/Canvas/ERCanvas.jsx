@@ -245,13 +245,18 @@ const ERCanvas = forwardRef(function ERCanvas(
       const base = diagramRef.current;
       if (!graph || !base) return;
 
-      const built = buildColumnsFromRows(payload.fields);
+      const isEdit = dialog?.type === 'table-edit';
+      const existingTable = isEdit
+        ? base.tables.find((t) => t.id === dialog?.tableId)
+        : undefined;
+      const built = buildColumnsFromRows(
+        payload.fields,
+        existingTable?.columns ?? [],
+      );
       if (built.error) {
         showToast('err', built.error);
         return;
       }
-
-      const isEdit = dialog?.type === 'table-edit';
       const position =
         pendingPositionRef.current ||
         (isEdit
